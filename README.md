@@ -5,22 +5,28 @@ Matlab library for Control Barrier Function (CBF) and Control Lyapunov Function 
 - Demonstrations on toy examples.
 
 
-### Requirements
+## 1. Requirements
 - Matlab
 - [Symbolic Math Toolbox](https://www.mathworks.com/products/symbolic.html)
+- [Optimization Toolbox](https://www.mathworks.com/products/optimization.html)
 
-### Usage
+
+
+## 2. Usage
 1. Create a class that inherit `CtrlAffineSys`.
-2. Create a class function `defineSystem` and define your dynamics using the symbolic toolbox.
 3. Create class functions `defineClf` and `defineCbf` and define your CLF and CBF in each function respectively using the same symbolic expressions.
+2. Create a class function `defineSystem` and define your dynamics using the symbolic toolbox.
 4. To run the simulation or run the controller, create a class instance with parameters specified as a Matlab structure array, and use the built-in functions—dynamics and other controllers such as `ctrlCbfClfQp`, `ctrlClfQp`, etc.
 
 Please checkout the [Manual](https://github.com/HybridRobotics/CBF-CLF-Helper/blob/master/Manual_v1.pdf) for more details.
 
-### Demos
+### Running over SSH Server
+Checkout [note_on_ssh.md](./note_on_ssh.md) for running the code over a matlab SSH server.
+
+## 3. Demos
 Run files in the directory `demos` in Matlab.
 
-### Citation
+## 4. Citation
 ```
 @misc{choi2020cbfclfhelper,
   author       = {Jason J. Choi},
@@ -31,6 +37,6 @@ Run files in the directory `demos` in Matlab.
 }
 ```
 
-### Notes
+## 5. Notes
 Unofficial 2.0 version is under development at [this repo](https://github.com/ChoiJangho/CBF-CLF-Helper).
 If you want to see new demos, please check out this [folder](https://github.com/ChoiJangho/CBF-CLF-Helper/tree/feedback_linearization/demos).
