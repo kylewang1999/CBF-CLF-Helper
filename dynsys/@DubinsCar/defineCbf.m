@@ -9,5 +9,5 @@ function cbf = defineCbf(~, params, symbolic_state)
 
     distance = (p_x - xo)^2 + (p_y - yo)^2 - d^2;
     derivDistance = 2*(p_x-xo)*v*cos(theta) + 2*(p_y-yo)*v*sin(theta);
-    cbf = derivDistance + params.cbf_gamma0 * distance; 
+    cbf = derivDistance + params.cbf_gamma0 * distance;
 end

@@ -13,7 +13,7 @@ params.u_min = -3; % min yaw rate (right)
 params.xo = 5;
 params.yo = 4;
 % Obstacle radius
-params.d = 2;
+params.d = 2.5;
 params.cbf_gamma0 = 1;
 % Desired target point
 params.xd = 12;
@@ -61,107 +61,65 @@ end
 
 plot_results(ts, xs, us, hs, [params.xo;params.yo], params.d)
 
+
 function plot_results(t, xs, us, hs, p_o, r_o)
+    output_dir = fullfile(fileparts(mfilename('fullpath')), 'figs', 'dubins_car');
+    if ~exist(output_dir, 'dir')
+        mkdir(output_dir);
+    end
 
-output_dir = fullfile(fileparts(mfilename('fullpath')), 'figs', 'dubins_car');
-if ~exist(output_dir, 'dir')
-    mkdir(output_dir);
-end
+    fig1 = figure;
+    subplot(3,1,1)
+    plot(t, xs(:,1))
+    xlabel('t')
+    ylabel('x [m]')
 
-fig1 = figure;
-subplot(3,1,1)
-plot(t, xs(:,1))
-xlabel('t')
-ylabel('x [m]')
+    subplot(3,1,2)
+    plot(t, xs(:,2))
+    xlabel('t')
+    ylabel('y [m]')
 
-subplot(3,1,2)
-plot(t, xs(:,2))
-xlabel('t')
-ylabel('y [m]')
+    subplot(3,1,3)
+    plot(t, xs(:,3))
+    xlabel('t')
+    ylabel('theta [rad]')
+    saveas(fig1, fullfile(output_dir, 'state_vs_time.png'))
 
-subplot(3,1,3)
-plot(t, xs(:,3))
-xlabel('t')
-ylabel('theta [rad]')
-saveas(fig1, fullfile(output_dir, 'state_vs_time.png'))
+    fig2 = figure;
+    plot(t(1:end-1), us)
+    xlabel('t')
+    ylabel('u [rad/s]')
+    saveas(fig2, fullfile(output_dir, 'control_input_vs_time.png'))
 
-fig2 = figure;
-plot(t(1:end-1), us)
-xlabel('t')
-ylabel('u [rad/s]')
-saveas(fig2, fullfile(output_dir, 'control_input_vs_time.png'))
+    lim_min = min(min(xs(:, 1)), min(xs(:, 2)));
+    lim_max = max(max(xs(:, 1)), max(xs(:, 2)));
+    lim_min = min([lim_min, p_o(1)-r_o, p_o(2)-r_o]);
+    lim_max = max([lim_max, p_o(1)+r_o, p_o(2)+r_o]);
 
-lim_min = min(min(xs(:, 1)), min(xs(:, 2)));
-lim_max = max(max(xs(:, 1)), max(xs(:, 2)));
-lim_min = min([lim_min, p_o(1)-r_o, p_o(2)-r_o]);
-lim_max = max([lim_max, p_o(1)+r_o, p_o(2)+r_o]);
+    fig3 = figure;
+    plot(xs(:, 1), xs(:, 2));
+    draw_circle(p_o, r_o);
 
-fig3 = figure;
-plot(xs(:, 1), xs(:, 2));
-draw_circle(p_o, r_o);
+    xlim([lim_min, lim_max]);
+    ylim([lim_min, lim_max]);
+    xlabel('x [m]')
+    ylabel('y [m]')
+    saveas(fig3, fullfile(output_dir, 'trajectory.png'))
 
-xlim([lim_min, lim_max]);
-ylim([lim_min, lim_max]);
-xlabel('x [m]')
-ylabel('y [m]')
-saveas(fig3, fullfile(output_dir, 'trajectory.png'))
-
-fig4 = figure;
-plot(t(1:end-1), hs)
-xlabel('t')
-ylabel('cbf h(s)')
-saveas(fig4, fullfile(output_dir, 'cbf_vs_time.png'))
-
-
-subplot(3,1,1)
-plot(t, xs(:,1))
-xlabel('t')
-ylabel('x [m]')
-
-subplot(3,1,2)
-plot(t, xs(:,2))
-xlabel('t')
-ylabel('y [m]')
-
-subplot(3,1,3)
-plot(t, xs(:,3))
-xlabel('t')
-ylabel('theta [rad]')
-
-
-figure
-plot(t(1:end-1), us)
-xlabel('t')
-ylabel('u [rad/s]')
-
-
-lim_min = min(min(xs(:, 1)), min(xs(:, 2)));
-lim_max = max(max(xs(:, 1)), max(xs(:, 2)));
-lim_min = min([lim_min, p_o(1)-r_o, p_o(2)-r_o]);
-lim_max = max([lim_max, p_o(1)+r_o, p_o(2)+r_o]);
-
-figure
-plot(xs(:, 1), xs(:, 2));
-draw_circle(p_o, r_o);
-
-xlim([lim_min, lim_max]);
-ylim([lim_min, lim_max]);
-xlabel('x [m]')
-ylabel('y [m]')
-
-figure
-plot(t(1:end-1), hs)
-xlabel('t')
-ylabel('cbf h(s)');
+    fig4 = figure;
+    plot(t(1:end-1), hs)
+    xlabel('t')
+    ylabel('cbf h(s)')
+    saveas(fig4, fullfile(output_dir, 'cbf_vs_time.png'))
 
 end
+
 
 function h = draw_circle(center,r)
-hold on
-th = 0:pi/50:2*pi;
-xunit = r * cos(th) + center(1);
-yunit = r * sin(th) + center(2);
-h = plot(xunit, yunit);
-hold off
-
+    hold on
+    th = 0:pi/50:2*pi;
+    xunit = r * cos(th) + center(1);
+    yunit = r * sin(th) + center(2);
+    h = plot(xunit, yunit);
+    hold off
 end
