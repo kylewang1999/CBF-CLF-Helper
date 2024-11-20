@@ -1,7 +1,9 @@
 {
     "MATLAB.installPath": "/usr/local/MATLAB/R2024b",
     "cSpell.words": [
+        "argnums",
         "axhline",
+        "blit",
         "cbar",
         "CLARABEL",
         "colorbar",
@@ -9,8 +11,12 @@
         "ECOS",
         "figsize",
         "gridspec",
+        "inds",
         "ineq",
         "jaxopt",
-        "viridis"
+        "jshtml",
+        "viridis",
+        "xlim",
+        "ylim"
     ]
 }
