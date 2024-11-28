@@ -4,6 +4,7 @@ from functools import partial
 import jaxopt, cvxpy as cp
 from matplotlib.animation import FuncAnimation
 from IPython.display import HTML
+from tqdm import tqdm
 
 
 
@@ -38,6 +39,24 @@ class ControlAffineSystem():
 
     def solve_qp(self, state, control):
         raise NotImplementedError("solve_clf_cbf_pq method is not implemented")
+
+
+    def generate_trajectory(self):
+        
+        state, control = self.state_init, self.control_init
+        trajectory = {'ts':[], 'state':[], 'control':[], 'stat_infeasible':[]}
+        for i, t in (pbar:=tqdm(enumerate(ts:=jnp.arange(0, self.T, self.dt)),
+                                total=len(ts))):
+            pbar.update(1)
+            control, stat_infeasible = self.solve_qp(state, control)
+            state_dot = self.fn_dynamics_ode(state, control)
+            state += self.dt * state_dot
+            trajectory['ts'].append(t)
+            trajectory['state'].append(state.copy())
+            trajectory['control'].append(control)
+            trajectory['stat_infeasible'].append(stat_infeasible)
+        trajectory = {k:np.array(v) for k,v in trajectory.items()}
+        return trajectory
 
 
     def plot_trajectory(self, trajectory):
@@ -205,13 +224,16 @@ class TwoDubinsCar(ControlAffineSystem):
         @jax.jit
         def _fn_clf(state):
             x1, y1, th1, x2, y2, th2 = state
-            
-            # dist = jnp.cos(th1) * (y1 - y2) - jnp.sin(th1) * (x1 - x2) # facilitates chasing
-            dist = jnp.cos(th1) * jnp.sin(th2) - jnp.sin(th1) * jnp.cos(th2) + (y1-y2) # maintains course
-            return dist**2
+
+            dist1 = jnp.cos(th1) * jnp.sin(th2) - jnp.sin(th1) * jnp.cos(th2)
+            _th1 = jnp.arctan2((y1-y2), (x1-x2))
+            _th2 = jnp.arctan2((self.state_init[1]-self.state_init[4]), 
+                                (self.state_init[0]-self.state_init[3]))
+            dist2 = jnp.cos(_th1) * jnp.sin(_th2) - jnp.sin(_th1) * jnp.cos(_th2)
+            return (dist1 + 10*dist2) ** 2
 
 
-        super().__init__(**kwargs, 
+        super().__init__(**kwargs,
                          fn_f=_fn_f, fn_g=_fn_g, fn_cbf=_fn_cbf, fn_clf=_fn_clf,
                          fn_cbf_grad=jax.grad(_fn_cbf), fn_clf_grad=jax.grad(_fn_clf))
 
@@ -261,7 +283,10 @@ class TwoDubinsCar(ControlAffineSystem):
         return control, stat_infeasible
     
     
-    def plot_trajectory(self, trajectory):
+    def plot_trajectory(self, trajectory, **kwargs):
+        
+        relative_coordinates = kwargs.get('relative_coordinates', False)
+        
         fig = plt.figure(figsize=(20,6))
         gs = fig.add_gridspec(2, 2)
         ax1 = fig.add_subplot(gs[:, 0])
@@ -273,12 +298,18 @@ class TwoDubinsCar(ControlAffineSystem):
         
         ts = np.arange(0, self.T, self.dt)
 
-        points1=ax1.scatter(trajectory['state'][:,0], trajectory['state'][:,1], c=ts, cmap='Blues')
-        points2=ax1.scatter(trajectory['state'][:,3], trajectory['state'][:,4], c=ts, cmap='Reds')
-        cbar1 = plt.colorbar(points1, ax=ax1)
-        cbar2 = plt.colorbar(points2, ax=ax1)
-        cbar1.set_label('Time (s): Car 1')
-        cbar2.set_label('Time (s): Car 2')
+        if not relative_coordinates:
+            points1=ax1.scatter(trajectory['state'][:,0], trajectory['state'][:,1], c=ts, cmap='Blues')
+            cbar1 = plt.colorbar(points1, ax=ax1)
+            cbar1.set_label('Time (s): Car 1')
+            points2=ax1.scatter(trajectory['state'][:,3], trajectory['state'][:,4], c=ts, cmap='Reds')
+            cbar2 = plt.colorbar(points2, ax=ax1)
+            cbar2.set_label('Time (s): Car 2')
+        else:
+            points1=ax1.scatter(trajectory['state'][:,0] - trajectory['state'][:,3], 
+                                trajectory['state'][:,1] - trajectory['state'][:,4], c=ts, cmap='Blues')
+            cbar1 = plt.colorbar(points1, ax=ax1)
+            cbar1.set_label('Time (s): Car 1')
         
         stat_infeasible = trajectory['stat_infeasible']
         ax2.plot(ts, trajectory['control'], label=r'$\omega$')
@@ -294,11 +325,12 @@ class TwoDubinsCar(ControlAffineSystem):
         ax1.legend(); ax2.legend(); ax3.legend()
 
 
-    def animate_trajectory(self, trajectory):
-        fig = plt.figure(figsize=(20,6))
+    def animate_trajectory(self, trajectory, **kwargs):
+        fig = plt.figure(figsize=(10,10))
         ax = fig.add_subplot(111)
         ax.set_title('State Trajectory'); ax.axis('equal')
-        ax.set_xlim(-10, 10); ax.set_ylim(-10, 15)
+        ax.set_xlim(trajectory['state'][:,[0,3]].min()-1, trajectory['state'][:,[0,3]].max()+1); 
+        ax.set_ylim(trajectory['state'][:,[1,4]].min()-1, trajectory['state'][:,[1,4]].max()+1)
         ax.set_aspect('equal')
         
         ts = np.arange(0, self.T, self.dt)

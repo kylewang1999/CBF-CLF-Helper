@@ -1,3 +1,6 @@
+addpath(fullfile(fileparts(mfilename('fullpath')), '..', 'lib'))
+addpath(fullfile(fileparts(mfilename('fullpath')), '..', 'dynsys'))
+
 clear all; close all;
 
 dt = 0.02;
@@ -56,18 +59,46 @@ for k = 1:total_k-1
     t = t + dt;
 end
 
-figure;
-title('Inverted Pendulum: CLF-QP States');
-subplot(2, 1, 1);
-plot(ts, 180 * xs(:, 1)/pi);
-xlabel("t (sec)"); ylabel("theta (deg)");
+% figure;
+% title('Inverted Pendulum: CLF-QP States');
+% subplot(2, 1, 1);
+% plot(ts, 180 * xs(:, 1)/pi);
+% xlabel("t (sec)"); ylabel("theta (deg)");
 
-subplot(2, 1, 2);
-plot(ts, 180 * xs(:, 2)/pi);
-xlabel("t (sec)"); ylabel("dtheta (deg/s)");
+% subplot(2, 1, 2);
+% plot(ts, 180 * xs(:, 2)/pi);
+% xlabel("t (sec)"); ylabel("dtheta (deg/s)");
 
-figure;
-plot(ts(1:end-1), us); hold on;
-plot(ts(1:end-1), params.u_max*ones(size(ts, 1)-1, 1), 'k--');
-plot(ts(1:end-1), params.u_min*ones(size(ts, 1)-1, 1), 'k--');
-xlabel("t (sec)"); ylabel("u (N.m)");
+% figure;
+% plot(ts(1:end-1), us); hold on;
+% plot(ts(1:end-1), params.u_max*ones(size(ts, 1)-1, 1), 'k--');
+% plot(ts(1:end-1), params.u_min*ones(size(ts, 1)-1, 1), 'k--');
+% xlabel("t (sec)"); ylabel("u (N.m)");
+
+plot_results(xs, ts, us, params);
+
+function plot_results(xs, ts, us, params)
+    output_dir = fullfile(fileparts(mfilename('fullpath')), 'figs', 'inverted_pendulum');
+    if ~exist(output_dir, 'dir')
+        mkdir(output_dir);
+    end
+
+    % Plot states
+    figure;
+    subplot(2, 1, 1);
+    plot(ts, 180 * xs(:, 1)/pi);
+    xlabel("t (sec)"); ylabel("theta (deg)");
+    title('Inverted Pendulum: CLF-QP States');
+    subplot(2, 1, 2);
+    plot(ts, 180 * xs(:, 2)/pi);
+    xlabel("t (sec)"); ylabel("dtheta (deg/s)");
+    saveas(gcf, fullfile(output_dir, 'states.png'));
+
+    % Plot control input
+    figure;
+    plot(ts(1:end-1), us); hold on;
+    plot(ts(1:end-1), params.u_max*ones(size(ts, 1)-1, 1), 'k--');
+    plot(ts(1:end-1), params.u_min*ones(size(ts, 1)-1, 1), 'k--');
+    xlabel("t (sec)"); ylabel("u (N.m)");
+    saveas(gcf, fullfile(output_dir, 'control_input.png'));
+end

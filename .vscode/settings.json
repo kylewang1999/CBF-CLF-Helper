@@ -1,6 +1,7 @@
 {
     "MATLAB.installPath": "/usr/local/MATLAB/R2024b",
     "cSpell.words": [
+        "arctan",
         "argnums",
         "axhline",
         "blit",
@@ -15,6 +16,7 @@
         "ineq",
         "jaxopt",
         "jshtml",
+        "pbar",
         "viridis",
         "xlim",
         "ylim"
